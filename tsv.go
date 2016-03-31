@@ -9,8 +9,6 @@ import (
 )
 
 type TsvLog struct {
-	tsvFile    *os.File
-	writer     *csv.Writer
 	headers    []string
 	fileName   string
 	timeFormat string
@@ -24,13 +22,10 @@ func Create(headers []string, path string, format string) *TsvLog {
 	}
 
 	writer := csv.NewWriter(tsvFile)
-
-	writer.Comma = '\t' // Use tab-delimited instead of comma <---- here!
+	writer.Comma = '\t'
 
 	log := TsvLog{
-		tsvFile:    tsvFile,
 		headers:    append([]string{"ts"}, headers...),
-		writer:     writer,
 		fileName:   path,
 		timeFormat: format}
 
@@ -39,17 +34,35 @@ func Create(headers []string, path string, format string) *TsvLog {
 	}
 
 	writer.Flush()
-
+	tsvFile.Close()
 	return &log
 }
 
 func (log *TsvLog) Add(data []string) error {
 	var err error
+	var tsvFile *os.File
+
 	if len(data) != len(log.headers)-1 {
 		err = errors.New("csv data length doesnt match header length")
 	} else {
-		log.writer.Write(append([]string{time.Now().Format(log.timeFormat)}, data...))
-		log.writer.Flush()
+		_, err := os.Stat(log.fileName)
+		creatingNewFile := os.IsNotExist(err)
+		tsvFile, err = os.OpenFile(log.fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+
+		if err != nil {
+			fmt.Println(err)
+		} else {
+
+			writer := csv.NewWriter(tsvFile)
+			writer.Comma = '\t'
+
+			if creatingNewFile {
+				writer.Write(log.headers)
+			}
+			writer.Write(append([]string{time.Now().Format(log.timeFormat)}, data...))
+			writer.Flush()
+			tsvFile.Close()
+		}
 	}
 	return err
 }
@@ -68,16 +81,10 @@ func (log *TsvLog) Read() ([]string, [][]string) {
 		fmt.Println(err2)
 	}
 
+	file.Close()
 	return records[0], records[1:]
 }
 
-func (log *TsvLog) Close() {
-	log.writer.Flush()
-	log.tsvFile.Close()
-}
-
 func (log *TsvLog) Delete() {
-	log.writer.Flush()
-	log.tsvFile.Close()
 	os.Remove(log.fileName)
 }
