@@ -59,7 +59,7 @@ func (log *TsvLog) Add(data []string) error {
 	return err
 }
 
-func (log *TsvLog) Read() ([]string, [][]string) {
+func (log *TsvLog) Read() [][]string {
 	file, err := os.Open(log.fileName)
 	if err != nil {
 		fmt.Println(err)
@@ -74,7 +74,7 @@ func (log *TsvLog) Read() ([]string, [][]string) {
 	}
 
 	file.Close()
-	return records[0], records[1:]
+	return records
 }
 
 func (log *TsvLog) Delete() {

@@ -22,16 +22,16 @@ func TestLog(t *testing.T) {
 		t.Errorf("adding malformed data failed to raise error")
 	}
 
-	readHeaders, readData := syslog.Read()
-	if !reflect.DeepEqual(headers, readHeaders[1:]) {
+	readData := syslog.Read()
+	if !reflect.DeepEqual(headers, readData[0][1:]) {
 		t.Errorf("reading headers failed from the tsv")
 	}
 
-	if !reflect.DeepEqual(data, readData[0][1:]) {
+	if !reflect.DeepEqual(data, readData[1][1:]) {
 		t.Errorf("reading data failed from the tsv")
 	}
 
-	if !reflect.DeepEqual(data2, readData[1][1:]) {
+	if !reflect.DeepEqual(data2, readData[2][1:]) {
 		t.Errorf("reading data2 failed from the tsv")
 	}
 
@@ -49,16 +49,16 @@ func TestServerRestart(t *testing.T) {
 	syslog.Add(data)
 	syslog.Add(data2)
 
-	readHeaders, readData := syslog.Read()
-	if !reflect.DeepEqual(headers, readHeaders[1:]) {
+	readData := syslog.Read()
+	if !reflect.DeepEqual(headers, readData[0][1:]) {
 		t.Errorf("reading headers failed from the tsv")
 	}
 
-	if !reflect.DeepEqual(data, readData[0][1:]) {
+	if !reflect.DeepEqual(data, readData[1][1:]) {
 		t.Errorf("reading data failed from the tsv")
 	}
 
-	if !reflect.DeepEqual(data2, readData[1][1:]) {
+	if !reflect.DeepEqual(data2, readData[2][1:]) {
 		t.Errorf("reading data2 failed from the tsv")
 	}
 
@@ -82,12 +82,12 @@ func TestLogRotate(t *testing.T) {
 		t.Errorf("adding malformed data failed to raise error")
 	}
 
-	readHeaders, readData := syslog.Read()
-	if !reflect.DeepEqual(headers, readHeaders[1:]) {
+	readData := syslog.Read()
+	if !reflect.DeepEqual(headers, readData[0][1:]) {
 		t.Errorf("reading headers failed from the tsv")
 	}
 
-	if !reflect.DeepEqual(data2, readData[0][1:]) {
+	if !reflect.DeepEqual(data2, readData[1][1:]) {
 		t.Errorf("reading data failed from the tsv")
 	}
 
