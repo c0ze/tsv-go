@@ -12,57 +12,49 @@ type TsvLog struct {
 	headers    []string
 	fileName   string
 	timeFormat string
+	writer     *csv.Writer
+	tsvFile    *os.File
 }
 
-func Create(headers []string, path string, format string) *TsvLog {
-	tsvFile, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+func (log *TsvLog) getOrCreateFile() {
+	_, err := os.Stat(log.fileName)
+	creatingNewFile := os.IsNotExist(err)
+
+	log.tsvFile, err = os.OpenFile(log.fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	writer := csv.NewWriter(tsvFile)
-	writer.Comma = '\t'
+	log.writer = csv.NewWriter(log.tsvFile)
+	log.writer.Comma = '\t'
+
+	if creatingNewFile {
+		log.writer.Write(log.headers)
+	}
+}
+
+func Create(headers []string, path string, format string) *TsvLog {
+	headersWithTs := append([]string{"ts"}, headers...) // prepend timestamp header
 
 	log := TsvLog{
-		headers:    append([]string{"ts"}, headers...),
+		headers:    headersWithTs,
 		fileName:   path,
 		timeFormat: format}
 
-	if len(headers) > 0 {
-		writer.Write(log.headers)
-	}
-
-	writer.Flush()
-	tsvFile.Close()
 	return &log
 }
 
 func (log *TsvLog) Add(data []string) error {
 	var err error
-	var tsvFile *os.File
 
 	if len(data) != len(log.headers)-1 {
 		err = errors.New("csv data length doesnt match header length")
 	} else {
-		_, err := os.Stat(log.fileName)
-		creatingNewFile := os.IsNotExist(err)
-		tsvFile, err = os.OpenFile(log.fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+		log.getOrCreateFile()
 
-		if err != nil {
-			fmt.Println(err)
-		} else {
-
-			writer := csv.NewWriter(tsvFile)
-			writer.Comma = '\t'
-
-			if creatingNewFile {
-				writer.Write(log.headers)
-			}
-			writer.Write(append([]string{time.Now().Format(log.timeFormat)}, data...))
-			writer.Flush()
-			tsvFile.Close()
-		}
+		log.writer.Write(append([]string{time.Now().Format(log.timeFormat)}, data...))
+		log.Close()
 	}
 	return err
 }
@@ -87,4 +79,9 @@ func (log *TsvLog) Read() ([]string, [][]string) {
 
 func (log *TsvLog) Delete() {
 	os.Remove(log.fileName)
+}
+
+func (log *TsvLog) Close() {
+	log.writer.Flush()
+	log.tsvFile.Close()
 }

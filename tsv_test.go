@@ -38,6 +38,33 @@ func TestLog(t *testing.T) {
 	syslog.Delete()
 }
 
+func TestServerRestart(t *testing.T) {
+	headers := []string{"temperature", "voltage"}
+	syslog := Create(headers, "./test.tsv", timeFormat)
+	syslog = Create(headers, "./test.tsv", timeFormat)
+
+	data := []string{"50.6", "1.122"}
+	data2 := []string{"48", "1.3"}
+
+	syslog.Add(data)
+	syslog.Add(data2)
+
+	readHeaders, readData := syslog.Read()
+	if !reflect.DeepEqual(headers, readHeaders[1:]) {
+		t.Errorf("reading headers failed from the tsv")
+	}
+
+	if !reflect.DeepEqual(data, readData[0][1:]) {
+		t.Errorf("reading data failed from the tsv")
+	}
+
+	if !reflect.DeepEqual(data2, readData[1][1:]) {
+		t.Errorf("reading data2 failed from the tsv")
+	}
+
+	syslog.Delete()
+}
+
 func TestLogRotate(t *testing.T) {
 	headers := []string{"temperature", "voltage"}
 	syslog := Create(headers, "./test.tsv", timeFormat)
