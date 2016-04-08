@@ -2,13 +2,14 @@ package tsv
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
 const timeFormat = "2006-01-02 3:04:05"
 
 func TestLog(t *testing.T) {
-	headers := []string{"temperature", "voltage"}
+	headers := "temperature voltage"
 	syslog := Create(headers, "./test.tsv", timeFormat)
 
 	data := []string{"50.6", "1.122"}
@@ -23,7 +24,7 @@ func TestLog(t *testing.T) {
 	}
 
 	readData := syslog.Read()
-	if !reflect.DeepEqual(headers, readData[0][1:]) {
+	if !reflect.DeepEqual(strings.Fields(headers), readData[0][1:]) {
 		t.Errorf("reading headers failed from the tsv")
 	}
 
@@ -39,7 +40,7 @@ func TestLog(t *testing.T) {
 }
 
 func TestServerRestart(t *testing.T) {
-	headers := []string{"temperature", "voltage"}
+	headers := "temperature voltage"
 	syslog := Create(headers, "./test.tsv", timeFormat)
 	syslog = Create(headers, "./test.tsv", timeFormat)
 
@@ -50,7 +51,7 @@ func TestServerRestart(t *testing.T) {
 	syslog.Add(data2)
 
 	readData := syslog.Read()
-	if !reflect.DeepEqual(headers, readData[0][1:]) {
+	if !reflect.DeepEqual(strings.Fields(headers), readData[0][1:]) {
 		t.Errorf("reading headers failed from the tsv")
 	}
 
@@ -66,7 +67,7 @@ func TestServerRestart(t *testing.T) {
 }
 
 func TestLogRotate(t *testing.T) {
-	headers := []string{"temperature", "voltage"}
+	headers := "temperature voltage"
 	syslog := Create(headers, "./test.tsv", timeFormat)
 
 	data := []string{"50.6", "1.122"}
@@ -83,7 +84,7 @@ func TestLogRotate(t *testing.T) {
 	}
 
 	readData := syslog.Read()
-	if !reflect.DeepEqual(headers, readData[0][1:]) {
+	if !reflect.DeepEqual(strings.Fields(headers), readData[0][1:]) {
 		t.Errorf("reading headers failed from the tsv")
 	}
 

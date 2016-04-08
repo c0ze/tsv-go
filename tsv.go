@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -12,6 +13,7 @@ type TsvLog struct {
 	headers    []string
 	fileName   string
 	timeFormat string
+	tz         *time.Location
 	writer     *csv.Writer
 	tsvFile    *os.File
 }
@@ -34,13 +36,26 @@ func (log *TsvLog) getOrCreateFile() {
 	}
 }
 
-func Create(headers []string, path string, format string) *TsvLog {
-	headersWithTs := append([]string{"ts"}, headers...) // prepend timestamp header
+func Create(params ...string) *TsvLog {
+	headers := strings.Fields("ts " + params[0])
+	path := params[1]
+	format := params[2]
+	zone := "UTC"
+	if len(params) > 3 && params[3] != "" {
+		zone = params[3]
+	}
+
+	tz, err := time.LoadLocation(zone)
+
+	if err != nil {
+		panic(fmt.Sprintf("invalid time zone %v", zone))
+	}
 
 	log := TsvLog{
-		headers:    headersWithTs,
+		headers:    headers,
 		fileName:   path,
-		timeFormat: format}
+		timeFormat: format,
+		tz:         tz}
 
 	return &log
 }
@@ -53,7 +68,7 @@ func (log *TsvLog) Add(data []string) error {
 	} else {
 		log.getOrCreateFile()
 
-		log.writer.Write(append([]string{time.Now().Format(log.timeFormat)}, data...))
+		log.writer.Write(append([]string{time.Now().In(log.tz).Format(log.timeFormat)}, data...))
 		log.Close()
 	}
 	return err
